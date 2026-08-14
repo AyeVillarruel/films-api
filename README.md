@@ -24,9 +24,10 @@ Backend desarrollado con **NestJS** para gestionar películas, con autenticació
 ## Inicio rápido
 
 ```bash
-git clone <url-del-repositorio>
-cd films-repo
+git clone https://github.com/AyeVillarruel/films-api.git
+cd films-api
 npm install
+cp .env.example .env
 npm run start:dev
 ```
 
@@ -83,8 +84,8 @@ Desde Swagger podés probar todos los endpoints. Para endpoints protegidos, usá
 
 | Método | Ruta | Acceso | Descripción |
 |--------|------|--------|-------------|
-| GET | `/movies` | Público | Listar todas las películas |
-| GET | `/movies/:id` | Usuario regular | Detalle de una película |
+| GET | `/movies` | Público | Listar películas (paginado) |
+| GET | `/movies/:id` | Usuario regular | Detalle de una película. **El admin queda excluido a propósito** según el enunciado. |
 | POST | `/movies` | Administrador | Crear película |
 | PATCH | `/movies/:id` | Administrador | Actualizar película |
 | DELETE | `/movies/:id` | Administrador | Eliminar película |
@@ -100,7 +101,7 @@ Desde Swagger podés probar todos los endpoints. Para endpoints protegidos, usá
 
 | Método | Ruta | Acceso | Descripción |
 |--------|------|--------|-------------|
-| GET | `/favorites` | Usuario autenticado | Listar mis películas favoritas |
+| GET | `/favorites` | Usuario autenticado | Listar mis películas favoritas (paginado) |
 | POST | `/favorites/:movieId` | Usuario autenticado | Agregar película a favoritos |
 | DELETE | `/favorites/:movieId` | Usuario autenticado | Quitar película de favoritos |
 
@@ -108,11 +109,13 @@ Desde Swagger podés probar todos los endpoints. Para endpoints protegidos, usá
 
 | Método | Ruta | Acceso | Descripción |
 |--------|------|--------|-------------|
-| GET | `/watchlist` | Usuario autenticado | Listar películas para ver más tarde |
+| GET | `/watchlist` | Usuario autenticado | Listar películas para ver más tarde (paginado) |
 | POST | `/watchlist/:movieId` | Usuario autenticado | Agregar a ver más tarde |
 | DELETE | `/watchlist/:movieId` | Usuario autenticado | Quitar de ver más tarde |
 
-> **Nota sobre cantidad de resultados:** `GET /movies` devuelve **todas** las películas en una sola respuesta (sin paginación). Tras sincronizar con SWAPI suelen ser **6 películas**. `GET /movies/recommendations` acepta `?limit=5` por defecto.
+> **Nota sobre cantidad de resultados:** `GET /movies`, `GET /favorites` y `GET /watchlist` devuelven respuestas paginadas con `{ data, total, page, limit }`. Parámetros opcionales: `?page=1&limit=20` (máximo 100). Tras sincronizar con SWAPI suelen ser **6 películas**. `GET /movies/recommendations` acepta `?limit=5` por defecto.
+
+> **Recomendaciones:** el score combina afinidad con tus likes (70%) y calidad global normalizada (30%). Detalle en `src/recommendations/recommendations.service.ts`.
 
 ## Roles
 
@@ -232,11 +235,13 @@ src/
 |----------|-------------|---------|
 | `PORT` | Puerto del servidor | `3000` |
 | `DB_PATH` | Ruta de la base SQLite | `films.db` |
-| `ADMIN_EMAIL` | Email del admin inicial | `admin@example.com` |
-| `ADMIN_PASSWORD` | Contraseña del admin inicial | `admin123` |
+| `JWT_SECRET` | Secreto para firmar JWT (**obligatorio**, mínimo 32 caracteres) | — |
+| `JWT_EXPIRES_IN` | Expiración del token JWT | `24h` |
+| `ADMIN_EMAIL` | Email del admin inicial | `admin@example.com` (solo fuera de producción) |
+| `ADMIN_PASSWORD` | Contraseña del admin inicial | `admin123` (solo fuera de producción) |
 | `ADMIN_NAME` | Nombre del admin inicial | `Administrador` |
 
-Todas son opcionales: si no configurás nada, la app funciona con esos valores por defecto.
+Copiá `.env.example` a `.env` antes de arrancar localmente. En producción, definí al menos `JWT_SECRET` y, si querés seed de admin, `ADMIN_EMAIL` + `ADMIN_PASSWORD`.
 
 ## Publicación gratuita (GitHub + Render)
 
@@ -262,7 +267,15 @@ Abrí la terminal en la carpeta del proyecto (`films-repo`) y ejecutá:
 ```bash
 git init
 git add .
-git commit -m "Films API - prueba técnica"
+git commit -m "$(cat <<'EOF'
+feat: API REST de películas Star Wars con NestJS
+
+Backend con autenticación JWT, roles user/admin, CRUD de películas,
+sincronización con SWAPI, favoritos, puntuaciones, watchlist y
+recomendaciones personalizadas. SQLite con migraciones TypeORM,
+documentación Swagger y tests unitarios/e2e.
+EOF
+)"
 git branch -M main
 git remote add origin https://github.com/TU-USUARIO/films-api.git
 git push -u origin main
@@ -294,7 +307,7 @@ Si GitHub te pide autenticación, usá un **Personal Access Token** como contras
 | **Start Command** | `npm run start:prod` |
 | **Instance Type** | **Free** |
 
-4. **Environment Variables:** no hace falta agregar ninguna. La app usa valores por defecto (admin, JWT interno, etc.). Render setea `PORT` solo.
+4. **Environment Variables:** agregá al menos `JWT_SECRET` (32+ caracteres). Para seed de admin en prod, también `ADMIN_EMAIL` y `ADMIN_PASSWORD`.
 5. Clic en **Create Web Service** y esperá el deploy (5–10 min la primera vez).
 
 ### Paso 5 — Probar la API publicada
@@ -334,7 +347,7 @@ Incluí en tu entrega:
 | `<token-del-usuario>` | curl del flujo de usuario | Token del usuario registrado, no del admin |
 | `<url-del-repositorio>` | README inicio rápido | URL de clonado de tu repo (opcional, solo estética) |
 
-**No tenés que reemplazar nada más** para que funcione: ni `JWT_SECRET`, ni variables de entorno en Render.
+**No tenés que reemplazar nada más** para que funcione, salvo **`JWT_SECRET` en Render** (obligatorio) y las credenciales admin si querés seed en producción.
 
 > **Notas del plan free:** el servicio se duerme tras ~15 min sin uso; la primera request puede tardar 30–60 s. Tras cada redeploy la base SQLite se vacía: volvé a ejecutar **POST /movies/sync**.
 

@@ -36,6 +36,7 @@ describe('WatchlistService', () => {
 
   const mockRepository = {
     find: jest.fn(),
+    findAndCount: jest.fn(),
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
@@ -67,21 +68,19 @@ describe('WatchlistService', () => {
 
   describe('findAllByUser', () => {
     it('debería retornar la lista de ver más tarde', async () => {
-      mockRepository.find.mockResolvedValue([mockItem]);
+      mockRepository.findAndCount.mockResolvedValue([[mockItem], 1]);
 
       const result = await service.findAllByUser('user-uuid-1');
 
-      expect(result).toHaveLength(1);
-      expect(result[0].movie).toEqual(mockMovie);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].movie).toEqual(mockMovie);
     });
   });
 
   describe('add', () => {
     it('debería agregar una película a ver más tarde', async () => {
       mockMoviesService.findOne.mockResolvedValue(mockMovie);
-      mockRepository.findOne
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(mockItem);
+      mockRepository.findOne.mockResolvedValue(null);
       mockRepository.create.mockReturnValue(mockItem);
       mockRepository.save.mockResolvedValue(mockItem);
 

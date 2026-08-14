@@ -1,6 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { Movie } from './entities/movie.entity';
 import { MoviesService } from './movies.service';
@@ -24,15 +25,22 @@ describe('MoviesService', () => {
 
   const mockRepository = {
     find: jest.fn(),
+    findAndCount: jest.fn(),
     findOne: jest.fn(),
+    findBy: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
     remove: jest.fn(),
+    upsert: jest.fn(),
   };
 
   const mockSwapiService = {
     fetchAllFilms: jest.fn(),
     extractSwapiId: jest.fn(),
+  };
+
+  const mockDataSource = {
+    transaction: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -41,6 +49,7 @@ describe('MoviesService', () => {
         MoviesService,
         { provide: getRepositoryToken(Movie), useValue: mockRepository },
         { provide: SwapiService, useValue: mockSwapiService },
+        { provide: DataSource, useValue: mockDataSource },
       ],
     }).compile();
 
@@ -49,14 +58,21 @@ describe('MoviesService', () => {
   });
 
   describe('findAll', () => {
-    it('debería retornar un listado de películas', async () => {
-      mockRepository.find.mockResolvedValue([mockMovie]);
+    it('debería retornar un listado paginado de películas', async () => {
+      mockRepository.findAndCount.mockResolvedValue([[mockMovie], 1]);
 
-      const result = await service.findAll();
+      const result = await service.findAll(1, 20);
 
-      expect(result).toEqual([mockMovie]);
-      expect(mockRepository.find).toHaveBeenCalledWith({
+      expect(result).toEqual({
+        data: [mockMovie],
+        total: 1,
+        page: 1,
+        limit: 20,
+      });
+      expect(mockRepository.findAndCount).toHaveBeenCalledWith({
         order: { episodeId: 'ASC' },
+        skip: 0,
+        take: 20,
       });
     });
   });
@@ -138,15 +154,18 @@ describe('MoviesService', () => {
 
       mockSwapiService.fetchAllFilms.mockResolvedValue(swapiFilms);
       mockSwapiService.extractSwapiId.mockReturnValue('1');
-      mockRepository.findOne.mockResolvedValue(null);
-      mockRepository.create.mockReturnValue(mockMovie);
-      mockRepository.save.mockResolvedValue(mockMovie);
+      mockRepository.findBy.mockResolvedValue([]);
+      mockDataSource.transaction.mockImplementation(async (callback) =>
+        callback({ getRepository: () => mockRepository }),
+      );
+      mockRepository.upsert.mockResolvedValue(undefined);
 
       const result = await service.syncFromSwapi();
 
       expect(result.synced).toBe(1);
       expect(result.created).toBe(1);
       expect(result.updated).toBe(0);
+      expect(mockRepository.upsert).toHaveBeenCalled();
     });
   });
 });

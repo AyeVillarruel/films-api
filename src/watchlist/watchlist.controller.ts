@@ -7,6 +7,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Query,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -15,6 +16,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { User } from '../users/entities/user.entity';
 import { WatchlistService } from './watchlist.service';
 
@@ -26,9 +28,12 @@ export class WatchlistController {
 
   @Get()
   @ApiOperation({ summary: 'Listar películas para ver más tarde' })
-  @ApiResponse({ status: 200, description: 'Listado de ver más tarde' })
-  findAll(@CurrentUser() user: Omit<User, 'password'>) {
-    return this.watchlistService.findAllByUser(user.id);
+  @ApiResponse({ status: 200, description: 'Listado paginado de ver más tarde' })
+  findAll(
+    @CurrentUser() user: Omit<User, 'password'>,
+    @Query() query: PaginationQueryDto,
+  ) {
+    return this.watchlistService.findAllByUser(user.id, query.page, query.limit);
   }
 
   @Post(':movieId')

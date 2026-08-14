@@ -163,6 +163,54 @@ describe('RecommendationsService', () => {
     );
   });
 
+  it('debería priorizar mejor promedio global entre candidatos del mismo director', async () => {
+    const candidateLow: Movie = {
+      ...originalTrilogy[1],
+      id: 'movie-low',
+      title: 'Candidate Low',
+      episodeId: 7,
+      director: 'George Lucas',
+    };
+    const candidateHigh: Movie = {
+      ...originalTrilogy[2],
+      id: 'movie-high',
+      title: 'Candidate High',
+      episodeId: 8,
+      director: 'George Lucas',
+    };
+
+    mockMoviesRepository.find.mockResolvedValue([
+      originalTrilogy[0],
+      candidateLow,
+      candidateHigh,
+    ]);
+    mockRatingsRepository.find.mockResolvedValue([
+      {
+        movieId: 'movie-4',
+        score: 5,
+        movie: originalTrilogy[0],
+      },
+    ]);
+    mockFavoritesRepository.find.mockResolvedValue([]);
+    mockWatchlistRepository.find.mockResolvedValue([]);
+    mockRatingsService.getRanking.mockResolvedValue([
+      {
+        movie: candidateHigh,
+        averageScore: 5,
+        ratingsCount: 10,
+      },
+      {
+        movie: candidateLow,
+        averageScore: 2,
+        ratingsCount: 10,
+      },
+    ]);
+
+    const result = await service.getForUser('user-uuid-1', 2);
+
+    expect(result[0].movie.id).toBe('movie-high');
+  });
+
   it('debería excluir películas en ver más tarde', async () => {
     mockMoviesRepository.find.mockResolvedValue(originalTrilogy);
     mockRatingsRepository.find.mockResolvedValue([]);

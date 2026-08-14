@@ -11,7 +11,10 @@ import { SwapiService } from './swapi.service';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Movie]),
-    HttpModule,
+    HttpModule.register({
+      timeout: 5000,
+      maxRedirects: 3,
+    }),
     RatingsModule,
     RecommendationsModule,
   ],

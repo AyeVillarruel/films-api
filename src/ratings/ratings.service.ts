@@ -116,7 +116,7 @@ export class RatingsService {
   }
 
   async getRanking(
-    minVotes = 1,
+    minVotes?: number,
     limit?: number,
   ): Promise<RankingEntry[]> {
     let query = this.ratingsRepository
@@ -125,7 +125,7 @@ export class RatingsService {
       .addSelect('AVG(rating.score)', 'averageScore')
       .addSelect('COUNT(rating.id)', 'ratingsCount')
       .groupBy('rating.movieId')
-      .having('COUNT(rating.id) >= :minVotes', { minVotes })
+      .having('COUNT(rating.id) >= :minVotes', { minVotes: minVotes ?? 1 })
       .orderBy('averageScore', 'DESC')
       .addOrderBy('ratingsCount', 'DESC');
 
