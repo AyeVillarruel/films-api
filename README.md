@@ -24,7 +24,7 @@ Backend desarrollado con **NestJS** para gestionar películas, con autenticació
 ## Inicio rápido
 
 ```bash
-git clone <url-del-repositorio>
+git clone git@github.com:AyeVillarruel/films-api.git
 cd films-repo
 npm install
 npm run start:dev
@@ -206,8 +206,6 @@ npm run migration:show
 npm run migration:revert
 ```
 
-> Si venías usando una base creada con `synchronize` y falla al migrar, borrá el archivo local y dejá que se recree:
-> `rm films.db` y reiniciá la app.
 
 ## Estructura del proyecto
 
@@ -236,107 +234,7 @@ src/
 | `ADMIN_PASSWORD` | Contraseña del admin inicial | `admin123` |
 | `ADMIN_NAME` | Nombre del admin inicial | `Administrador` |
 
-Todas son opcionales: si no configurás nada, la app funciona con esos valores por defecto.
-
-## Publicación gratuita (GitHub + Render)
-
-Guía completa para subir el proyecto y dejarlo online.
-
-### Paso 1 — Crear el repositorio en GitHub
-
-1. Entrá a [github.com](https://github.com) e iniciá sesión.
-2. Clic en **+** (arriba a la derecha) → **New repository**.
-3. Completá:
-   - **Repository name:** por ejemplo `films-api` (elegí el nombre que quieras)
-   - **Visibility:** Public (o Private si preferís)
-   - **No** marques "Add a README" ni ".gitignore" (ya los tenés en el proyecto)
-4. Clic en **Create repository**.
-5. Copiá la URL que te muestra GitHub. Se ve así:
-   - HTTPS: `https://github.com/TU-USUARIO/films-api.git`
-   - SSH: `git@github.com:TU-USUARIO/films-api.git`
-
-### Paso 2 — Subir tu código desde la terminal
-
-Abrí la terminal en la carpeta del proyecto (`films-repo`) y ejecutá:
-
-```bash
-git init
-git add .
-git commit -m "Films API - prueba técnica"
-git branch -M main
-git remote add origin https://github.com/TU-USUARIO/films-api.git
-git push -u origin main
-```
-
-Reemplazá `TU-USUARIO` y `films-api` por tu usuario y nombre real del repo.
-
-Si GitHub te pide autenticación, usá un **Personal Access Token** como contraseña (Settings → Developer settings → Personal access tokens).
-
-### Paso 3 — Crear cuenta en Render
-
-1. Entrá a [render.com](https://render.com).
-2. **Get Started** → registrate con tu cuenta de **GitHub** (es lo más fácil).
-3. Autorizá a Render para ver tus repositorios.
-
-### Paso 4 — Crear el Web Service
-
-1. En el dashboard: **New +** → **Web Service**.
-2. Conectá el repo `films-api` (o como lo hayas llamado).
-3. Completá el formulario:
-
-| Campo | Valor |
-|-------|-------|
-| **Name** | `films-api` (o el que quieras; define parte de la URL) |
-| **Region** | el más cercano a vos |
-| **Branch** | `main` |
-| **Runtime** | Node |
-| **Build Command** | `npm install && npm run build` |
-| **Start Command** | `npm run start:prod` |
-| **Instance Type** | **Free** |
-
-4. **Environment Variables:** no hace falta agregar ninguna. La app usa valores por defecto (admin, JWT interno, etc.). Render setea `PORT` solo.
-5. Clic en **Create Web Service** y esperá el deploy (5–10 min la primera vez).
-
-### Paso 5 — Probar la API publicada
-
-Cuando el deploy termine, Render te da una URL como:
-
-`https://films-api-xxxx.onrender.com`
-
-1. Abrí Swagger: `https://films-api-xxxx.onrender.com/api/docs`
-2. **POST /auth/login** con:
-   ```json
-   { "email": "admin@example.com", "password": "admin123" }
-   ```
-3. Copiá el `access_token` de la respuesta.
-4. Clic en **Authorize** → pegá: `Bearer <tu-token>`
-5. Ejecutá **POST /movies/sync** (carga las 6 películas de SWAPI).
-6. Verificá con **GET /movies**.
-
-### Paso 6 — Entregar la prueba técnica
-
-Incluí en tu entrega:
-
-- Link al repo: `https://github.com/TU-USUARIO/films-api`
-- Link a Swagger: `https://films-api-xxxx.onrender.com/api/docs`
-- Credenciales admin: `admin@example.com` / `admin123`
-
-### Qué reemplazar (checklist)
-
-| Placeholder | Dónde | Por qué |
-|-------------|-------|---------|
-| `TU-USUARIO` | comandos git, URL del repo | Tu usuario de GitHub |
-| `films-api` | nombre del repo / servicio | El nombre que elijas |
-| `https://github.com/TU-USUARIO/films-api.git` | `git remote add origin` | URL exacta de tu repo nuevo |
-| `https://films-api-xxxx.onrender.com` | links de Swagger en la entrega | URL real que te da Render |
-| `<token-del-paso-2>` | curl / Authorize en Swagger | Token JWT que devuelve el login (cambia en cada sesión) |
-| `<movie-id>` | curl de favoritos, rating, etc. | UUID de una película (lo ves en `GET /movies`) |
-| `<token-del-usuario>` | curl del flujo de usuario | Token del usuario registrado, no del admin |
-| `<url-del-repositorio>` | README inicio rápido | URL de clonado de tu repo (opcional, solo estética) |
-
-**No tenés que reemplazar nada más** para que funcione: ni `JWT_SECRET`, ni variables de entorno en Render.
-
-> **Notas del plan free:** el servicio se duerme tras ~15 min sin uso; la primera request puede tardar 30–60 s. Tras cada redeploy la base SQLite se vacía: volvé a ejecutar **POST /movies/sync**.
+Todas son opcionales: si no configurás nada, la app funciona con esos valores por defecto
 
 ## Tecnologías
 
