@@ -15,6 +15,11 @@ export interface Recommendation {
 }
 
 const HIGH_RATING_THRESHOLD = 4;
+const AFFINITY_WEIGHT = 0.7;
+const GLOBAL_QUALITY_WEIGHT = 0.3;
+const DIRECTOR_AFFINITY = 1;
+const SAGA_AFFINITY = 0.7;
+const ADJACENT_AFFINITY = 0.4;
 
 @Injectable()
 export class RecommendationsService {
@@ -86,7 +91,7 @@ export class RecommendationsService {
         return {
           movie: candidate,
           reason,
-          relevanceScore: Math.round(score * 10) / 10,
+          relevanceScore: Math.round(score * 100) / 10,
           averageScore: globalAverage,
         };
       })
@@ -136,63 +141,81 @@ export class RecommendationsService {
     likedMovies: Movie[],
     globalAverage: number | null,
   ): { score: number; reason: string } {
-    let score = 0;
+    let affinityTotal = 0;
     let reason = 'Te puede interesar según tus preferencias';
     let bestReasonWeight = 0;
 
     for (const liked of likedMovies) {
-      if (
-        candidate.director &&
-        liked.director &&
-        candidate.director === liked.director
-      ) {
-        const weight = 30;
-        score += weight;
-        if (weight > bestReasonWeight) {
-          bestReasonWeight = weight;
-          reason = `Te gustó "${liked.title}" y comparte director (${liked.director})`;
-        }
-      }
+      const affinity = this.getAffinitySignal(candidate, liked);
 
-      const candidateSaga = this.getSaga(candidate.episodeId);
-      const likedSaga = this.getSaga(liked.episodeId);
+      if (affinity > 0) {
+        affinityTotal += affinity;
 
-      if (
-        candidateSaga !== 'other' &&
-        candidateSaga === likedSaga &&
-        candidate.id !== liked.id
-      ) {
-        const weight = 20;
-        score += weight;
-        if (weight > bestReasonWeight) {
-          bestReasonWeight = weight;
-          reason = `Te gustó "${liked.title}" y pertenece a la misma saga`;
-        }
-      }
-
-      if (
-        candidate.episodeId &&
-        liked.episodeId &&
-        Math.abs(candidate.episodeId - liked.episodeId) === 1
-      ) {
-        const weight = 10;
-        score += weight;
-        if (weight > bestReasonWeight) {
-          bestReasonWeight = weight;
-          reason = `Es la continuación cercana de "${liked.title}" en la saga`;
+        if (affinity > bestReasonWeight) {
+          bestReasonWeight = affinity;
+          reason = this.buildReason(candidate, liked, affinity);
         }
       }
     }
 
-    if (globalAverage !== null) {
-      score += globalAverage * 2;
-    }
+    const normalizedAffinity = affinityTotal / likedMovies.length;
+    const normalizedGlobalQuality = (globalAverage ?? 0) / 5;
+    const score =
+      AFFINITY_WEIGHT * normalizedAffinity +
+      GLOBAL_QUALITY_WEIGHT * normalizedGlobalQuality;
 
     if (bestReasonWeight === 0 && globalAverage !== null) {
       reason = 'Una de las mejor valoradas por la comunidad';
     }
 
     return { score, reason };
+  }
+
+  private getAffinitySignal(candidate: Movie, liked: Movie): number {
+    if (
+      candidate.director &&
+      liked.director &&
+      candidate.director === liked.director
+    ) {
+      return DIRECTOR_AFFINITY;
+    }
+
+    const candidateSaga = this.getSaga(candidate.episodeId);
+    const likedSaga = this.getSaga(liked.episodeId);
+
+    if (
+      candidateSaga !== 'other' &&
+      candidateSaga === likedSaga &&
+      candidate.id !== liked.id
+    ) {
+      return SAGA_AFFINITY;
+    }
+
+    if (
+      candidate.episodeId &&
+      liked.episodeId &&
+      Math.abs(candidate.episodeId - liked.episodeId) === 1
+    ) {
+      return ADJACENT_AFFINITY;
+    }
+
+    return 0;
+  }
+
+  private buildReason(
+    candidate: Movie,
+    liked: Movie,
+    affinity: number,
+  ): string {
+    if (affinity === DIRECTOR_AFFINITY) {
+      return `Te gustó "${liked.title}" y comparte director (${liked.director})`;
+    }
+
+    if (affinity === SAGA_AFFINITY) {
+      return `Te gustó "${liked.title}" y pertenece a la misma saga`;
+    }
+
+    return `Es la continuación cercana de "${liked.title}" en la saga`;
   }
 
   private getSaga(episodeId?: number | null): 'prequel' | 'original' | 'other' {

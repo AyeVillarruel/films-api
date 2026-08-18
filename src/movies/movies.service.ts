@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, In, Repository } from 'typeorm';
+import { PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
 import { Movie } from './entities/movie.entity';
@@ -12,10 +13,18 @@ export class MoviesService {
     @InjectRepository(Movie)
     private readonly moviesRepository: Repository<Movie>,
     private readonly swapiService: SwapiService,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
   ) {}
 
-  async findAll(): Promise<Movie[]> {
-    return this.moviesRepository.find({ order: { episodeId: 'ASC' } });
+  async findAll(page = 1, limit = 20): Promise<PaginatedResponse<Movie>> {
+    const [data, total] = await this.moviesRepository.findAndCount({
+      order: { episodeId: 'ASC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    return { data, total, page, limit };
   }
 
   async findOne(id: string): Promise<Movie> {
@@ -44,37 +53,42 @@ export class MoviesService {
     await this.moviesRepository.remove(movie);
   }
 
-  async syncFromSwapi(): Promise<{ synced: number; created: number; updated: number }> {
+  async syncFromSwapi(): Promise<{
+    synced: number;
+    created: number;
+    updated: number;
+  }> {
     const swapiFilms = await this.swapiService.fetchAllFilms();
+    const movieDataArray = swapiFilms.map((film) => ({
+      title: film.title,
+      episodeId: film.episode_id,
+      openingCrawl: film.opening_crawl,
+      director: film.director,
+      producer: film.producer,
+      releaseDate: film.release_date,
+      swapiId: this.swapiService.extractSwapiId(film.url),
+    }));
+
+    const swapiIds = movieDataArray.map((movie) => movie.swapiId);
+    const existingMovies = swapiIds.length
+      ? await this.moviesRepository.findBy({ swapiId: In(swapiIds) })
+      : [];
+    const existingIds = new Set(existingMovies.map((movie) => movie.swapiId));
+
     let created = 0;
     let updated = 0;
 
-    for (const film of swapiFilms) {
-      const swapiId = this.swapiService.extractSwapiId(film.url);
-      const existing = await this.moviesRepository.findOne({
-        where: { swapiId },
-      });
-
-      const movieData = {
-        title: film.title,
-        episodeId: film.episode_id,
-        openingCrawl: film.opening_crawl,
-        director: film.director,
-        producer: film.producer,
-        releaseDate: film.release_date,
-        swapiId,
-      };
-
-      if (existing) {
-        Object.assign(existing, movieData);
-        await this.moviesRepository.save(existing);
+    for (const swapiId of swapiIds) {
+      if (existingIds.has(swapiId)) {
         updated++;
       } else {
-        const movie = this.moviesRepository.create(movieData);
-        await this.moviesRepository.save(movie);
         created++;
       }
     }
+
+    await this.dataSource.transaction(async (manager) => {
+      await manager.getRepository(Movie).upsert(movieDataArray, ['swapiId']);
+    });
 
     return { synced: swapiFilms.length, created, updated };
   }

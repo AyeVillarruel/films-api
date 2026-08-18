@@ -54,13 +54,17 @@ export class UsersService {
   }
 
   async findById(id: string): Promise<User> {
-    const user = await this.usersRepository.findOne({ where: { id } });
+    const user = await this.findByIdOrNull(id);
 
     if (!user) {
       throw new NotFoundException('Usuario no encontrado');
     }
 
     return user;
+  }
+
+  async findByIdOrNull(id: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { id } });
   }
 
   sanitizeUser(user: User): Omit<User, 'password'> {

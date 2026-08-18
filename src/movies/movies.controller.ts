@@ -8,7 +8,6 @@ import {
   Patch,
   Post,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -19,8 +18,8 @@ import {
 import { Public } from '../common/decorators/public.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { Role } from '../common/enums/role.enum';
-import { RolesGuard } from '../common/guards/roles.guard';
 import { RankingQueryDto } from '../ratings/dto/ranking-query.dto';
 import { RatingsService } from '../ratings/ratings.service';
 import { RecommendationsQueryDto } from '../recommendations/dto/recommendations-query.dto';
@@ -43,14 +42,18 @@ export class MoviesController {
   @Public()
   @Get()
   @ApiOperation({ summary: 'Obtener listado de películas' })
-  @ApiResponse({ status: 200, description: 'Listado de películas' })
-  findAll(): Promise<Movie[]> {
-    return this.moviesService.findAll();
+  @ApiResponse({ status: 200, description: 'Listado paginado de películas' })
+  findAll(@Query() query: PaginationQueryDto) {
+    return this.moviesService.findAll(query.page, query.limit);
   }
 
   @Public()
   @Get('ranking')
-  @ApiOperation({ summary: 'Ranking de películas por puntuación promedio' })
+  @ApiOperation({
+    summary: 'Ranking de películas por puntuación promedio',
+    description:
+      'Solo incluye películas con al menos minVotes votos. Las películas sin puntuaciones quedan fuera del ranking.',
+  })
   @ApiResponse({ status: 200, description: 'Ranking de películas' })
   getRanking(@Query() query: RankingQueryDto) {
     return this.ratingsService.getRanking(query.minVotes, query.limit);
@@ -70,7 +73,6 @@ export class MoviesController {
   }
 
   @Post('sync')
-  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({
@@ -82,8 +84,8 @@ export class MoviesController {
     return this.moviesService.syncFromSwapi();
   }
 
+  // Requisito del enunciado: el detalle solo lo ven usuarios regulares, no admins.
   @Get(':id')
-  @UseGuards(RolesGuard)
   @Roles(Role.USER)
   @ApiBearerAuth()
   @ApiOperation({
@@ -97,7 +99,6 @@ export class MoviesController {
   }
 
   @Post()
-  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Crear una nueva película (solo administradores)' })
@@ -108,7 +109,6 @@ export class MoviesController {
   }
 
   @Patch(':id')
-  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({
@@ -125,7 +125,6 @@ export class MoviesController {
   }
 
   @Delete(':id')
-  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Eliminar una película (solo administradores)' })

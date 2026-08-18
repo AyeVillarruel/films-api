@@ -1,0 +1,11 @@
+services:
+  api:
+    build: .
+    ports:
+      - '3000:3000'
+    environment:
+      JWT_SECRET: docker-test-secret-key-with-32-characters-min
+      ADMIN_EMAIL: admin@example.com
+      ADMIN_PASSWORD: admin123
+      ADMIN_NAME: Administrador
+      DB_PATH: films.db

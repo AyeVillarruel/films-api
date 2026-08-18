@@ -2,6 +2,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
+import { validationPipeOptions } from '../src/common/config/validation-pipe.config';
 import { SwapiFilm, SwapiService } from '../src/movies/swapi.service';
 
 const mockSwapiFilms: SwapiFilm[] = [
@@ -45,13 +46,7 @@ describe('Films API (e2e)', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    );
+    app.useGlobalPipes(new ValidationPipe(validationPipeOptions));
     await app.init();
 
     const adminLogin = await request(app.getHttpServer())
@@ -80,6 +75,16 @@ describe('Films API (e2e)', () => {
           role: 'admin',
         })
         .expect(400);
+    });
+
+    it('devuelve 401 en login con contraseña corta', () => {
+      return request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email: 'admin-e2e@test.com',
+          password: '123',
+        })
+        .expect(401);
     });
 
     it('registra un usuario regular', async () => {
@@ -112,10 +117,14 @@ describe('Films API (e2e)', () => {
   });
 
   describe('Movies', () => {
-    it('lista películas públicamente', async () => {
+    it('lista películas públicamente con paginación', async () => {
       const response = await request(app.getHttpServer()).get('/movies').expect(200);
 
-      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body.data).toBeDefined();
+      expect(Array.isArray(response.body.data)).toBe(true);
+      expect(response.body.total).toBeDefined();
+      expect(response.body.page).toBe(1);
+      expect(response.body.limit).toBe(20);
     });
 
     it('permite sincronizar películas al administrador', async () => {
@@ -131,9 +140,9 @@ describe('Films API (e2e)', () => {
     it('obtiene películas luego del sync', async () => {
       const response = await request(app.getHttpServer()).get('/movies').expect(200);
 
-      expect(response.body.length).toBeGreaterThanOrEqual(2);
-      movieId = response.body[0].id;
-      secondMovieId = response.body[1].id;
+      expect(response.body.data.length).toBeGreaterThanOrEqual(2);
+      movieId = response.body.data[0].id;
+      secondMovieId = response.body.data[1].id;
     });
 
     it('permite ver detalle a un usuario regular', () => {
@@ -141,6 +150,13 @@ describe('Films API (e2e)', () => {
         .get(`/movies/${movieId}`)
         .set('Authorization', `Bearer ${userToken}`)
         .expect(200);
+    });
+
+    it('deniega ver detalle al administrador por diseño del enunciado', () => {
+      return request(app.getHttpServer())
+        .get(`/movies/${movieId}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(403);
     });
 
     it('deniega crear películas a un usuario regular', () => {
@@ -164,8 +180,8 @@ describe('Films API (e2e)', () => {
         .set('Authorization', `Bearer ${userToken}`)
         .expect(200);
 
-      expect(response.body).toHaveLength(1);
-      expect(response.body[0].movie.id).toBe(movieId);
+      expect(response.body.data).toHaveLength(1);
+      expect(response.body.data[0].movie.id).toBe(movieId);
     });
 
     it('agrega películas a ver más tarde', async () => {
@@ -179,7 +195,7 @@ describe('Films API (e2e)', () => {
         .set('Authorization', `Bearer ${userToken}`)
         .expect(200);
 
-      expect(response.body).toHaveLength(1);
+      expect(response.body.data).toHaveLength(1);
     });
 
     it('puntúa una película', async () => {

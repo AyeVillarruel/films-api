@@ -36,6 +36,7 @@ describe('FavoritesService', () => {
 
   const mockRepository = {
     find: jest.fn(),
+    findAndCount: jest.fn(),
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
@@ -67,22 +68,21 @@ describe('FavoritesService', () => {
 
   describe('findAllByUser', () => {
     it('debería retornar los favoritos del usuario', async () => {
-      mockRepository.find.mockResolvedValue([mockFavorite]);
+      mockRepository.findAndCount.mockResolvedValue([[mockFavorite], 1]);
 
       const result = await service.findAllByUser('user-uuid-1');
 
-      expect(result).toHaveLength(1);
-      expect(result[0].movie).toEqual(mockMovie);
-      expect(result[0].favoritedAt).toEqual(mockFavorite.createdAt);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].movie).toEqual(mockMovie);
+      expect(result.data[0].favoritedAt).toEqual(mockFavorite.createdAt);
+      expect(result.total).toBe(1);
     });
   });
 
   describe('add', () => {
     it('debería agregar una película a favoritos', async () => {
       mockMoviesService.findOne.mockResolvedValue(mockMovie);
-      mockRepository.findOne
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(mockFavorite);
+      mockRepository.findOne.mockResolvedValue(null);
       mockRepository.create.mockReturnValue(mockFavorite);
       mockRepository.save.mockResolvedValue(mockFavorite);
 

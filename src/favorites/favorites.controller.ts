@@ -7,6 +7,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Query,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -15,6 +16,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { User } from '../users/entities/user.entity';
 import { FavoritesService } from './favorites.service';
 
@@ -26,9 +28,12 @@ export class FavoritesController {
 
   @Get()
   @ApiOperation({ summary: 'Listar películas favoritas del usuario autenticado' })
-  @ApiResponse({ status: 200, description: 'Listado de favoritos' })
-  findAll(@CurrentUser() user: Omit<User, 'password'>) {
-    return this.favoritesService.findAllByUser(user.id);
+  @ApiResponse({ status: 200, description: 'Listado paginado de favoritos' })
+  findAll(
+    @CurrentUser() user: Omit<User, 'password'>,
+    @Query() query: PaginationQueryDto,
+  ) {
+    return this.favoritesService.findAllByUser(user.id, query.page, query.limit);
   }
 
   @Post(':movieId')

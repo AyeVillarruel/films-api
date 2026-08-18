@@ -14,7 +14,7 @@ export class Movie {
   @Column()
   title: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, unique: true })
   episodeId: number;
 
   @Column({ type: 'text', nullable: true })
