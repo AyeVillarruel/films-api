@@ -87,7 +87,11 @@ describe('RatingsService', () => {
       mockRatingsRepository.create.mockReturnValue(mockRating);
       mockRatingsRepository.save.mockResolvedValue(mockRating);
 
-      const result = await service.rate('user-uuid-1', mockMovie.id, rateMovieDto);
+      const result = await service.rate(
+        'user-uuid-1',
+        mockMovie.id,
+        rateMovieDto,
+      );
 
       expect(result.score).toBe(5);
       expect(mockRatingsRepository.create).toHaveBeenCalled();
@@ -95,10 +99,17 @@ describe('RatingsService', () => {
 
     it('debería actualizar una puntuación existente', async () => {
       mockMoviesRepository.findOne.mockResolvedValue(mockMovie);
-      mockRatingsRepository.findOne.mockResolvedValue({ ...mockRating, score: 3 });
+      mockRatingsRepository.findOne.mockResolvedValue({
+        ...mockRating,
+        score: 3,
+      });
       mockRatingsRepository.save.mockResolvedValue({ ...mockRating, score: 5 });
 
-      const result = await service.rate('user-uuid-1', mockMovie.id, rateMovieDto);
+      const result = await service.rate(
+        'user-uuid-1',
+        mockMovie.id,
+        rateMovieDto,
+      );
 
       expect(result.score).toBe(5);
       expect(mockRatingsRepository.create).not.toHaveBeenCalled();
@@ -150,9 +161,9 @@ describe('RatingsService', () => {
     it('debería lanzar NotFoundException si no hay puntuación', async () => {
       mockRatingsRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.remove('user-uuid-1', mockMovie.id),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.remove('user-uuid-1', mockMovie.id)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

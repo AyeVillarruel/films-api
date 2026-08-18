@@ -1,7 +1,4 @@
-import {
-  ConflictException,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Movie } from '../movies/entities/movie.entity';
@@ -96,9 +93,9 @@ describe('FavoritesService', () => {
       mockMoviesService.findOne.mockResolvedValue(mockMovie);
       mockRepository.findOne.mockResolvedValue(mockFavorite);
 
-      await expect(
-        service.add('user-uuid-1', mockMovie.id),
-      ).rejects.toThrow(ConflictException);
+      await expect(service.add('user-uuid-1', mockMovie.id)).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 
@@ -115,9 +112,9 @@ describe('FavoritesService', () => {
     it('debería lanzar NotFoundException si no está en favoritos', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.remove('user-uuid-1', mockMovie.id),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.remove('user-uuid-1', mockMovie.id)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

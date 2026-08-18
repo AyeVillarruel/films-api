@@ -1,7 +1,6 @@
 import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Role } from '../enums/role.enum';
-import { ROLES_KEY } from '../decorators/roles.decorator';
 import { RolesGuard } from './roles.guard';
 
 describe('RolesGuard', () => {
@@ -30,18 +29,14 @@ describe('RolesGuard', () => {
   });
 
   it('debería permitir acceso si el usuario tiene el rol requerido', () => {
-    jest
-      .spyOn(reflector, 'getAllAndOverride')
-      .mockReturnValue([Role.ADMIN]);
+    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([Role.ADMIN]);
 
     const context = createMockContext({ role: Role.ADMIN });
     expect(guard.canActivate(context)).toBe(true);
   });
 
   it('debería denegar acceso si el usuario no tiene el rol requerido', () => {
-    jest
-      .spyOn(reflector, 'getAllAndOverride')
-      .mockReturnValue([Role.ADMIN]);
+    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([Role.ADMIN]);
 
     const context = createMockContext({ role: Role.USER });
 
@@ -49,9 +44,7 @@ describe('RolesGuard', () => {
   });
 
   it('debería denegar acceso si no hay usuario autenticado', () => {
-    jest
-      .spyOn(reflector, 'getAllAndOverride')
-      .mockReturnValue([Role.USER]);
+    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([Role.USER]);
 
     const context = createMockContext(undefined);
 

@@ -32,7 +32,6 @@ describe('Films API (e2e)', () => {
   let userToken: string;
   let movieId: string;
   let secondMovieId: string;
-  let thirdMovieId: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -118,7 +117,9 @@ describe('Films API (e2e)', () => {
 
   describe('Movies', () => {
     it('lista películas públicamente con paginación', async () => {
-      const response = await request(app.getHttpServer()).get('/movies').expect(200);
+      const response = await request(app.getHttpServer())
+        .get('/movies')
+        .expect(200);
 
       expect(response.body.data).toBeDefined();
       expect(Array.isArray(response.body.data)).toBe(true);
@@ -138,7 +139,9 @@ describe('Films API (e2e)', () => {
     });
 
     it('obtiene películas luego del sync', async () => {
-      const response = await request(app.getHttpServer()).get('/movies').expect(200);
+      const response = await request(app.getHttpServer())
+        .get('/movies')
+        .expect(200);
 
       expect(response.body.data.length).toBeGreaterThanOrEqual(2);
       movieId = response.body.data[0].id;
@@ -238,7 +241,7 @@ describe('Films API (e2e)', () => {
         })
         .expect(201);
 
-      thirdMovieId = response.body.id;
+      expect(response.body.id).toBeDefined();
     });
 
     it('devuelve recomendaciones personalizadas', async () => {

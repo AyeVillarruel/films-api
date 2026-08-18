@@ -115,10 +115,7 @@ export class RatingsService {
     };
   }
 
-  async getRanking(
-    minVotes?: number,
-    limit?: number,
-  ): Promise<RankingEntry[]> {
+  async getRanking(minVotes?: number, limit?: number): Promise<RankingEntry[]> {
     let query = this.ratingsRepository
       .createQueryBuilder('rating')
       .select('rating.movieId', 'movieId')
@@ -167,7 +164,9 @@ export class RatingsService {
   }
 
   private async ensureMovieExists(movieId: string): Promise<Movie> {
-    const movie = await this.moviesRepository.findOne({ where: { id: movieId } });
+    const movie = await this.moviesRepository.findOne({
+      where: { id: movieId },
+    });
 
     if (!movie) {
       throw new NotFoundException(`Película con id ${movieId} no encontrada`);

@@ -68,7 +68,8 @@ export class UsersService {
   }
 
   sanitizeUser(user: User): Omit<User, 'password'> {
-    const { password: _, ...result } = user;
+    const { password, ...result } = user;
+    void password;
     return result;
   }
 }

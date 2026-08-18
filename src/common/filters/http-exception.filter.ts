@@ -30,8 +30,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const message =
       typeof exceptionResponse === 'string'
         ? exceptionResponse
-        : (exceptionResponse as { message?: string | string[] }).message ??
-          'Internal server error';
+        : ((exceptionResponse as { message?: string | string[] }).message ??
+          'Internal server error');
 
     if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
       this.logger.error(

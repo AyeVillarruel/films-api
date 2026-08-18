@@ -29,7 +29,9 @@ export class FavoritesService extends UserMovieCollectionService<
     );
   }
 
-  protected mapToResponse(item: Favorite & { movie: Movie }): FavoriteMovieResponse {
+  protected mapToResponse(
+    item: Favorite & { movie: Movie },
+  ): FavoriteMovieResponse {
     return {
       favoritedAt: item.createdAt,
       movie: item.movie,

@@ -1,7 +1,4 @@
-import {
-  ConflictException,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { PaginatedResponse } from '../interfaces/paginated-response.interface';
 import { Movie } from '../../movies/entities/movie.entity';

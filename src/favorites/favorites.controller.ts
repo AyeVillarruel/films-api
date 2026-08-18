@@ -27,13 +27,19 @@ export class FavoritesController {
   constructor(private readonly favoritesService: FavoritesService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Listar películas favoritas del usuario autenticado' })
+  @ApiOperation({
+    summary: 'Listar películas favoritas del usuario autenticado',
+  })
   @ApiResponse({ status: 200, description: 'Listado paginado de favoritos' })
   findAll(
     @CurrentUser() user: Omit<User, 'password'>,
     @Query() query: PaginationQueryDto,
   ) {
-    return this.favoritesService.findAllByUser(user.id, query.page, query.limit);
+    return this.favoritesService.findAllByUser(
+      user.id,
+      query.page,
+      query.limit,
+    );
   }
 
   @Post(':movieId')

@@ -28,7 +28,9 @@ export class RatingsController {
 
   @Public()
   @Get(':id/ratings')
-  @ApiOperation({ summary: 'Obtener promedio y cantidad de puntuaciones de una película' })
+  @ApiOperation({
+    summary: 'Obtener promedio y cantidad de puntuaciones de una película',
+  })
   @ApiResponse({ status: 200, description: 'Estadísticas de puntuación' })
   @ApiResponse({ status: 404, description: 'Película no encontrada' })
   getMovieStats(@Param('id', ParseUUIDPipe) id: string) {
@@ -38,7 +40,10 @@ export class RatingsController {
   @Get(':id/rating')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Obtener mi puntuación de una película' })
-  @ApiResponse({ status: 200, description: 'Puntuación del usuario autenticado' })
+  @ApiResponse({
+    status: 200,
+    description: 'Puntuación del usuario autenticado',
+  })
   @ApiResponse({ status: 404, description: 'Película no encontrada' })
   getMyRating(
     @CurrentUser() user: Omit<User, 'password'>,
